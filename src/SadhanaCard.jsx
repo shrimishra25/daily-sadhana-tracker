@@ -16,13 +16,33 @@ function App() {
   });
 
   const [totalMarks, setTotalMarks] = useState(0);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: false }));
+      }
   };
 
   const handleCalculateScore = (e) => {
+
+      let newErrors = {};
+
+        // 1. Validation Logic
+        if (!formData.name || formData.name.trim() === "") {
+          newErrors.name = true;
+        }
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+        alert("Please fill in the highlighted mandatory fields.");
+        return;
+      }
+  if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: false }));
+    }
     e.preventDefault();
     calculateMarks(); // Call the logic here to update the 'totalMarks' state
   };
@@ -85,8 +105,22 @@ const calculateMarks = () => {
 };
 
   const handleSave = async () => {
-    console.log("Saving to database:", { ...formData, totalMarks });
-    alert("Data sent to backend!");
+    const finalScore = calculateMarks();
+    const payload = { ...formData, totalMarks: Math.round(finalScore) };
+
+    try {
+      const response = await fetch('http://localhost:8080/api/sadhana/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert("Sadhana saved to Database successfully!");
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+    }
   };
 
   return (
@@ -94,7 +128,8 @@ const calculateMarks = () => {
       <h1>Daily Sadhana Tracker</h1>
 
       <div className="header-fields">
-        <input type="text" name="name" placeholder="Enter Your Name" onChange={handleChange} required />
+        <input type="text" name="name" placeholder="Enter Your Name"
+            onChange={handleChange} className={errors.name ? 'input-error' : '' }/>
         <input
           type="text" name="date" placeholder="Select Date"
           onFocus={(e) => (e.target.type = "date")}
@@ -162,7 +197,9 @@ const calculateMarks = () => {
 
       <div className="button-group">
         <button type="button" className="btn-secondary" onClick={handleCalculateScore}>Show Score</button>
+        {totalMarks > 0 && (
         <button type="button" className="btn-primary" onClick={handleSave}>Save Sadhana Card</button>
+        )}
       </div>
 
       <div className="score-card">
