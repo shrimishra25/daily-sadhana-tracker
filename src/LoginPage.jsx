@@ -6,81 +6,141 @@ const LoginPage = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    email: '', // Added for registration
+    email: '',
     fullName: '',
     counsellor: ''
   });
 
   const navigate = useNavigate();
+ // const [isCounsellorLogin, setIsCounsellorLogin] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
+    const selectedValue = formData.counsellor;
+    const assignedRole = selectedValue === "SELF_COUNSELLOR" ? "COUNSELLOR" : "COUNSELEE";
     if (isRegistering) {
-      // Logic for Registration
-      console.log("Registering User:", formData);
-      alert("Registration Successful! Please Login.");
-      setIsRegistering(false); // Move back to login mode
+      const payload = {
+        username: formData.username,
+        password: formData.password,
+        emailMobile: formData.email,
+        fullName: formData.fullName,
+        counsellor: selectedValue,
+        role: assignedRole
+      };
+      try {
+        const response = await fetch('http://localhost:8080/authenticate/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          alert("Registration Successful! Please Login.");
+          setIsRegistering(false);
+        } else {
+          const errorMsg = await response.text();
+          alert("Registration failed: " + errorMsg);
+        }
+      } catch (error) {
+        console.error("API Error:", error);
+        alert("Network Error: Check if the backend is running and CORS is enabled.");
+      }
     } else {
-      // Logic for Login (Using the admin/password for now)
-      if (formData.username === 'admin' && formData.password === 'password') {
-        onLogin(true);
-        navigate('/dashboard');
-      } else {
-        alert('Invalid Credentials');
+      const payload = {
+        username: formData.username,
+        password: formData.password
+      };
+      try {
+        const response = await fetch('http://localhost:8080/authenticate/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            const assignedRole = data.role;
+
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('userFullName', data.fullName);
+            localStorage.setItem('userRole', assignedRole);
+            onLogin(true, assignedRole, formData.fullName);
+
+            navigate('/dashboard');
+        } else {
+          const errorMsg = await response.text();
+          alert("Invalid Credentials: " + errorMsg);
+        }
+      } catch (error) {
+        console.error("API Error:", error);
+        alert("Network Error: Check if the backend is running and CORS is enabled.");
       }
     }
-  };
+  }; // Removed the extra } that was here causing the issue
 
   return (
     <div style={styles.container}>
       <form onSubmit={handleSubmit} style={styles.card}>
+
+          <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT7JVPyPGIWh1KQAE14BjiQfgzUK2jcMTo1nw&s"
+              alt="iskcon"
+              style={styles.logo}
+            />
+
         <h2 style={{ color: '#5C6BC0' }}>
           {isRegistering ? 'Create Account' : 'Sadhana Tracker Login'}
         </h2>
+
+        <input
+          type="text"
+          placeholder="Enter Your User Name"
+          required
+          value={formData.username}
+          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+          style={styles.input}
+        />
+        <input
+          type="password"
+          placeholder="Enter Your Password"
+          required
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          style={styles.input}
+        />
 
         {isRegistering && (
           <>
             <input
               type="text"
-              placeholder="Full Name"
+              placeholder="Enter Your Full Name"
               required
-              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               style={styles.input}
             />
             <input
-              type="email"
-              placeholder="Email Address"
+              type="text"
+              placeholder="Enter Your Email / Mobile"
               required
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               style={styles.input}
             />
-            <select required value={formData.counsellor}
-                onChange={(e) => setFormData({...formData, counsellor: e.target.value})}
-                style={styles.select}>
-                    <option value="" disabled>Select Counsellor Name</option>
-                    <option value="rsp">Rasayatra Prabhu</option>
-                    {/* <option value="Counsellor 2">Counsellor 2</option>
-                    <option value="Counsellor 3">Counsellor 3</option> */}
+            <select
+              required
+              value={formData.counsellor}
+              onChange={(e) => setFormData({ ...formData, counsellor: e.target.value })}
+              style={styles.select}
+            >
+              <option value="" disabled>Who is your Counsellor?</option>
+              <option value="rsp">Rasayatra Prabhu</option>
+              <option value="SELF_COUNSELLOR">I am a Counsellor</option>
             </select>
-
           </>
         )}
-
-        <input
-          type="text"
-          placeholder="Username"
-          required
-          onChange={(e) => setFormData({...formData, username: e.target.value})}
-          style={styles.input}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          required
-          onChange={(e) => setFormData({...formData, password: e.target.value})}
-          style={styles.input}
-        />
 
         <button type="submit" style={styles.button}>
           {isRegistering ? 'Register' : 'Login'}
@@ -89,7 +149,11 @@ const LoginPage = ({ onLogin }) => {
         <p style={{ marginTop: '15px', fontSize: '14px' }}>
           {isRegistering ? 'Already have an account?' : "Don't have an account?"}
           <span
-            onClick={() => setIsRegistering(!isRegistering)}
+            onClick={() => {
+              setIsRegistering(!isRegistering);
+              // Optional: Clear form when switching modes
+              setFormData({ username: '', password: '', email: '', fullName: '', counsellor: '' });
+            }}
             style={styles.toggleLink}
           >
             {isRegistering ? ' Login here' : ' Register here'}
@@ -116,7 +180,6 @@ const styles = {
     textAlign: 'center',
     width: '350px'
   },
-  // Unified Input Style
   input: {
     display: 'block',
     width: '100%',
@@ -126,22 +189,21 @@ const styles = {
     border: '1px solid #ddd',
     boxSizing: 'border-box',
     fontSize: '14px',
-    height: '45px' // Fixed height for alignment
+    height: '45px'
   },
-  // NEW: Select style that matches Input exactly
   select: {
     display: 'block',
     width: '100%',
     margin: '12px 0',
-    padding: '0 12px', // Vertical padding 0 because we use height
+    padding: '0 12px',
     borderRadius: '6px',
     border: '1px solid #ddd',
     boxSizing: 'border-box',
     fontSize: '14px',
-    height: '45px', // Must match input height
+    height: '45px',
     backgroundColor: 'white',
     cursor: 'pointer',
-    appearance: 'none', // Removes default browser arrow
+    appearance: 'none',
     backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'right 12px center',
@@ -166,4 +228,5 @@ const styles = {
     marginLeft: '5px'
   }
 };
+
 export default LoginPage;

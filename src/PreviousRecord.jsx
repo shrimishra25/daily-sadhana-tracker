@@ -2,14 +2,29 @@ import React, { useState, useEffect } from 'react';
 
 const PreviousRecord = ({ refresh }) => {
   const [recentRecords, setRecentRecords] = useState([]);
+  const [userName] = useState(localStorage.getItem('username') || '');
 
   useEffect(() => {
-    // Replace with your actual backend URL
-    fetch('http://localhost:8080/api/sadhana/recent')
-      .then(res => res.json())
+    const token = localStorage.getItem('token');
+    if (!token || !userName) return;
+    fetch(`http://localhost:8080/api/sadhana/sadhak?username=${userName}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Critical fix
+          'Content-Type': 'application/json'
+        }
+        })
+      .then(res => {
+          if (res.status === 404 || res.status === 204) return [];
+          if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
+            return res.json();
+          })
       .then(data => setRecentRecords(data))
-      .catch(err => console.error("Data fetch error:", err));
-  }, [refresh]);
+      .catch(err => {
+              console.error("History fetch error:", err);
+              setRecentRecords([]); // Reset to empty on error
+          });
+  }, [refresh, userName]);
 
   return (
     <div style={{ marginTop: '30px', padding: '20px', width: '100%', maxWidth: '800px', margin: '0 auto' }}>
@@ -17,10 +32,12 @@ const PreviousRecord = ({ refresh }) => {
 
       <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
         <thead>
-          <tr style={{ backgroundColor: '#f2f2f2', borderBottom: '2px solid #ddd' }}>
+          <tr style={{ backgroundColor: '#f2f2f2', borderBottom: '1px solid #ddd' }}>
             <th style={styles.th}>Date</th>
             <th style={styles.th}>Japa Rounds</th>
             <th style={styles.th}>Reading (mins)</th>
+            <th style={styles.th}>Hearing (mins)</th>
+            <th style={styles.th}>Marks (Out of 100)</th>
             <th style={styles.th}>Status</th>
           </tr>
         </thead>
@@ -29,9 +46,11 @@ const PreviousRecord = ({ refresh }) => {
             recentRecords.map((record, index) => (
               <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={styles.td}>{record.date}</td>
-                <td style={styles.td}>{record.japaRounds}</td>
-                <td style={styles.td}>{record.readingTime}</td>
-                <td style={styles.td}>{record.completed ? '✅' : '❌'}</td>
+                <td style={styles.td}>{record.chantingRounds}</td>
+                <td style={styles.td}>{record.studyTime}</td>
+                <td style={styles.td}>{record.hearingTime}</td>
+                <td style={styles.td}>{record.totalMarks}</td>
+                <td style={styles.td}>{record.totalMarks >= 35 ? '✅' : '❌'}</td>
               </tr>
             ))
           ) : (

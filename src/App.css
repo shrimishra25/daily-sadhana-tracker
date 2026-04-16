@@ -160,3 +160,21 @@ button:hover { opacity: 0.9; }
   border: 2px solid #ef4444 !important;
   background-color: #fef2f2;
 }
+
+input:disabled, select:disabled {
+    background-color: #f0f2f5;
+    color: #888;
+    cursor: not-allowed;
+    border: 1px dashed #ccc;
+}
+
+.btn-edit {
+    background-color: #f39c12;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+}
