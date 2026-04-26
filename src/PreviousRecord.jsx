@@ -7,7 +7,7 @@ const PreviousRecord = ({ refresh }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token || !userName) return;
-    fetch(`http://localhost:8080/api/sadhana/sadhak?username=${userName}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/sadhana/sadhak?username=${userName}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`, // Critical fix

@@ -29,7 +29,7 @@ function App() {
         const checkExistingRecord = async () => {
             const token = localStorage.getItem('token');
             try {
-                const response = await fetch(`http://localhost:8080/api/sadhana/byDate?date=${formData.date}&username=${userName}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sadhana/byDate?date=${formData.date}&username=${userName}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -155,12 +155,14 @@ const calculateMarks = (data) => {
   const handleSave = async () => {
       const token = localStorage.getItem('token');
       const finalScore = calculateMarks(formData);
-      const payload = { ...formData, totalMarks: Math.round(finalScore) }   ;
+      const payload = { ...formData, totalMarks: Math.round(finalScore) };
 
     try {
         const endpoint = hasExistingRecord
-            ? 'http://localhost:8080/api/sadhana/update'
-            : 'http://localhost:8080/api/sadhana/save';
+           // ? 'http://localhost:8080/api/sadhana/update'
+            //: 'http://localhost:8080/api/sadhana/save';?
+             ? `${import.meta.env.VITE_API_URL}/api/sadhana/update`
+             : `${import.meta.env.VITE_API_URL}/api/sadhana/save`;
 
         const methodType = hasExistingRecord ? 'PUT' : 'POST';
         const response = await fetch(endpoint, {

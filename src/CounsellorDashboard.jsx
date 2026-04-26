@@ -18,7 +18,8 @@ const CounsellorDashboard = () => {
             }
             try {
                 // This API endpoint will fetch records of all sadhaks tagged to this counsellor
-                const response = await fetch(`http://localhost:8080/api/sadhana/counsellor/report?counsellorName=${counsellorId}`, {
+                //const response = await fetch(`http://localhost:8080/api/sadhana/counsellor/report?counsellorName=${counsellorId}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sadhana/counsellor/report?counsellorName=${counsellorId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

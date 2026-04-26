@@ -28,7 +28,8 @@ const LoginPage = ({ onLogin }) => {
         role: assignedRole
       };
       try {
-        const response = await fetch('http://localhost:8080/authenticate/register', {
+        //const response = await fetch('http://localhost:8080/authenticate/register', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/authenticate/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -51,7 +52,8 @@ const LoginPage = ({ onLogin }) => {
         password: formData.password
       };
       try {
-        const response = await fetch('http://localhost:8080/authenticate/login', {
+        //const response = await fetch('http://localhost:8080/authenticate/login', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/authenticate/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
